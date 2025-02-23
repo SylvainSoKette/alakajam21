@@ -1,0 +1,10 @@
+#!/usr/bin/sh
+
+odin build . \
+	-out:alakajam21-sokette \
+	-o:speed \
+	-export-dependencies:json \
+	-export-dependencies-file:dependencies.json \
+	-obfuscate-source-code-locations \
+	-show-timings
+

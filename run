@@ -1,0 +1,4 @@
+#!/usr/bin/sh
+
+odin run . -define:IS_DEBUG_BUILD=true -out:alakajam21-sokette -o:minimal -debug
+
