@@ -27,7 +27,7 @@ Aggregate what is left of stars after their birth to create perfectly balanced s
 
 - F4 to toggle shader if your find the game too blurry
 
-![preview](/promo/menu.png)
+![preview](/promo/game.png)
 
 ## Tools
 
