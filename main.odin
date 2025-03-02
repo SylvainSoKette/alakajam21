@@ -309,6 +309,41 @@ render_menu :: proc(dt: f32) {
 
 render_lost :: proc(dt: f32) {}
 
+in_world :: proc(x, y: int) -> bool {
+	return x >= 0 && y >= 0 && x < WORLD_SIZE && y < WORLD_SIZE
+}
+
+count_adjacent :: proc(x, y: int) -> int {
+	neighbours := 0
+	tile: Tile
+	if in_world(x + 1, y) {
+		tile = game.tiles[(x + 1) + y * WORLD_SIZE]
+		neighbours += tile.type != TileType.VOID ? 1 : 0
+	}
+	if in_world(x - 1, y) {
+		tile = game.tiles[(x - 1) + y * WORLD_SIZE]
+		neighbours += tile.type != TileType.VOID ? 1 : 0
+	}
+	if in_world(x, y + 1) {
+		tile = game.tiles[x + (y + 1) * WORLD_SIZE]
+		neighbours += tile.type != TileType.VOID ? 1 : 0
+	}
+	if in_world(x, y - 1) {
+		tile = game.tiles[x + (y - 1) * WORLD_SIZE]
+		neighbours += tile.type != TileType.VOID ? 1 : 0
+	}
+	return neighbours
+}
+
+is_adjacent :: proc(x, y, mouseX, mouseY: int) -> bool {
+	if (mouseX == x) {
+		return mouseY - 1 == y || mouseY + 1 == y
+	} else if (mouseY == y) {
+		return mouseX - 1 == x || mouseX + 1 == x
+	}
+	return false
+}
+
 render_game :: proc(dt: f32) {
 	sunPosition := rl.Vector2{
 		linalg.cos(game.sunPeriod) * f32(app.width / 4.0) - 180,
@@ -319,18 +354,25 @@ render_game :: proc(dt: f32) {
 
 	mouseWorld := rl.GetScreenToWorld2D(rl.GetMousePosition(), game.gameCamera)
 	mousePos := world_to_tile(mouseWorld)
+	mouseX := int(mousePos.x)
+	mouseY := int(mousePos.y)
+	neighbours := count_adjacent(mouseX, mouseY)
 	for y in 0 ..< WORLD_SIZE {
 		for x in 0 ..< WORLD_SIZE {
 			pos := tile_to_world(x, y)
+			tile := game.tiles[x + y * WORLD_SIZE]
+			if tile.type == .VOID { continue }
+			
 			tileOffset := rl.Vector2{0, TILE_SIZE / 2}
 			color := rl.WHITE
-			if int(mousePos.x) == x && int(mousePos.y) == y {
-				color = rl.LIGHTGRAY
+			if mouseX == x && mouseY == y {
+				color = tile.type == TileType.DUST ? (neighbours > 1 ? rl.GREEN : rl.RED) : rl.GRAY
+				tileOffset.y -= 2
+			} else if (is_adjacent(x, y, mouseX, mouseY) && tile.type == .DUST) {
+				color = neighbours > 1 ? rl.LIME : rl.MAROON
 				tileOffset.y -= 2
 			}
 			pos += tileOffset
-			tile := game.tiles[x + y * WORLD_SIZE]
-			if tile.type == .VOID { continue }
 			sprite := tile_sprite(tile.type)
 			draw_sprite(app.spritesheet, sprite, pos, color)
 			when IS_DEBUG_BUILD {
@@ -460,10 +502,6 @@ render_ui_lost :: proc(dt: f32) {
 		h += line
 		rl.DrawText("Press [ESCAPE] to return to main menu", left, h, size, rl.GOLD)
 	}
-}
-
-in_world :: proc(x, y: int) -> bool {
-	return x >= 0 && y >= 0 && x < WORLD_SIZE && y < WORLD_SIZE
 }
 
 next_level :: proc() {
