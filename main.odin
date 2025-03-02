@@ -572,6 +572,7 @@ update_game :: proc(dt: f32) {
 		y := int(mouseTile.y)
 		if in_world(x, y) {
 			tile := &game.tiles[x + y * WORLD_SIZE]
+			if (tile.type == .VOID) { return }
 			right, left, top, bottom: ^Tile
 			neighbours := 0
 			if in_world(x + 1, y) {
