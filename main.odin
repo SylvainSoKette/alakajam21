@@ -356,21 +356,29 @@ render_game :: proc(dt: f32) {
 	mousePos := world_to_tile(mouseWorld)
 	mouseX := int(mousePos.x)
 	mouseY := int(mousePos.y)
+
+	tileAtMouse := Tile{ type = .VOID }
+	if in_world(mouseX, mouseY) {
+		tileAtMouse = game.tiles[mouseX + mouseY * WORLD_SIZE]
+	}
 	neighbours := count_adjacent(mouseX, mouseY)
 	for y in 0 ..< WORLD_SIZE {
 		for x in 0 ..< WORLD_SIZE {
 			pos := tile_to_world(x, y)
 			tile := game.tiles[x + y * WORLD_SIZE]
 			if tile.type == .VOID { continue }
-			
+
 			tileOffset := rl.Vector2{0, TILE_SIZE / 2}
 			color := rl.WHITE
-			if mouseX == x && mouseY == y {
-				color = tile.type == TileType.DUST ? (neighbours > 1 ? rl.GREEN : rl.RED) : rl.GRAY
-				tileOffset.y -= 2
-			} else if (is_adjacent(x, y, mouseX, mouseY) && tile.type == .DUST) {
-				color = neighbours > 1 ? rl.LIME : rl.MAROON
-				tileOffset.y -= 2
+			// special case, hovered, adjacent to hovered
+			if tileAtMouse.type != .VOID {
+				if mouseX == x && mouseY == y {
+					color = tile.type == TileType.DUST ? (neighbours > 1 ? rl.GREEN : rl.RED) : rl.GRAY
+					tileOffset.y -= 2
+				} else if (is_adjacent(x, y, mouseX, mouseY) && tile.type == .DUST) {
+					color = neighbours > 1 ? rl.GOLD : rl.MAROON
+					tileOffset.y -= 2
+				}
 			}
 			pos += tileOffset
 			sprite := tile_sprite(tile.type)
@@ -660,6 +668,13 @@ main :: proc() {
 	for !rl.WindowShouldClose() {
 		dt := rl.GetFrameTime()
 
+		switch game.screen {
+			case .MENU: update_menu(dt)
+			case .GAME: update_game(dt)
+			case .LOST: update_lost(dt)
+		}
+		update(dt)
+
 		if rl.IsMusicReady(app.music) && !rl.IsMusicStreamPlaying(app.music) {
 			rl.PlayMusicStream(app.music)
 		}
@@ -707,13 +722,6 @@ main :: proc() {
 			rl.EndMode2D()
 		}
 		rl.EndDrawing()
-		
-		switch game.screen {
-			case .MENU: update_menu(dt)
-			case .GAME: update_game(dt)
-			case .LOST: update_lost(dt)
-		}
-		update(dt)
 
 		free_all(context.temp_allocator)
 	}
