@@ -376,7 +376,7 @@ render_game :: proc(dt: f32) {
 					color = tile.type == TileType.DUST ? (neighbours > 1 ? rl.GREEN : rl.RED) : rl.GRAY
 					tileOffset.y -= 2
 				} else if (is_adjacent(x, y, mouseX, mouseY) && tile.type == .DUST) {
-					color = neighbours > 1 ? rl.GOLD : rl.MAROON
+					color = neighbours > 1 ? rl.LIME : rl.MAROON
 					tileOffset.y -= 2
 				}
 			}
@@ -477,11 +477,14 @@ render_ui_game :: proc(dt: f32) {
 			if tile.type == .ROCK { c.rock += 1 }
 			if tile.type == .PLANET { c.planet += 1 }
 		}
-		rl.DrawText(fmt.caprintf("> Ice: %i / %i", c.ice, o.ice), left, h, size, rl.GOLD)
+		colorIce := c.ice == o.ice ? rl.GREEN : rl.GOLD
+		rl.DrawText(fmt.caprintf("> Ice: %i / %i", c.ice, o.ice), left, h, size, colorIce)
 		h += line
-		rl.DrawText(fmt.caprintf("> Rocks: %i / %i", c.rock, o.rock), left, h, size, rl.GOLD)
+		colorRock := c.rock == o.rock ? rl.GREEN : rl.GOLD
+		rl.DrawText(fmt.caprintf("> Rocks: %i / %i", c.rock, o.rock), left, h, size, colorRock)
 		h += line
-		rl.DrawText(fmt.caprintf("> Planets: %i / %i", c.planet, o.planet), left, h, size, rl.GOLD)
+		colorPlanet := c.planet == o.planet ? rl.GREEN : rl.GOLD
+		rl.DrawText(fmt.caprintf("> Planets: %i / %i", c.planet, o.planet), left, h, size, colorPlanet)
 	}
 
 	{
@@ -497,6 +500,31 @@ render_ui_game :: proc(dt: f32) {
 }
 
 render_ui_lost :: proc(dt: f32) {
+	{
+		left: i32 = 64
+		size: i32 = 24
+		line: i32 = 42
+		h: i32 = 504
+
+		rl.DrawText("Objective:", left, h, size, rl.GOLD)
+		h += line
+		o := game.objective
+		c := Objective{}
+		for tile in game.tiles {
+			if tile.type == .ICE { c.ice += 1 }
+			if tile.type == .ROCK { c.rock += 1 }
+			if tile.type == .PLANET { c.planet += 1 }
+		}
+		rl.DrawText(fmt.caprintf("> Ice: %i / %i", c.ice, o.ice), left, h, size,
+			c.ice > o.ice ? rl.MAROON : rl.GOLD)
+		h += line
+		rl.DrawText(fmt.caprintf("> Rocks: %i / %i", c.rock, o.rock), left, h, size,
+			c.rock > o.rock ? rl.MAROON : rl.GOLD)
+		h += line
+		rl.DrawText(fmt.caprintf("> Planets: %i / %i", c.planet, o.planet), left, h, size,
+			c.planet > o.planet ? rl.MAROON :rl.GOLD)
+	}
+
 	rl.DrawText("This system is out of balance !", 64, 256, 72, rl.RED)
 	{
 		left: i32 = 640
