@@ -2,38 +2,44 @@
 
 in vec2 fragTexCoord;
 
-out vec4 fragColor;
+uniform sampler2D sScreenTexture;
+uniform vec2 uResolution;
+uniform float uBrightness;
 
-uniform sampler2D texture0;
-uniform vec4 colDiffuse;
+const float curvature = 5.0;
+const float scanlineIntensity = 1.2;
+const float rgbShift = 0.0015;
+
+// https://babylonjs.medium.com/retro-crt-shader-a-post-processing-effect-study-1cb3f783afbc
+vec2 curveRemapUV(vec2 uv) {
+	uv = uv * 2.0 - 1.0;
+	vec2 offset = abs(uv.yx) / vec2(curvature, curvature);
+	uv = uv + uv * offset * offset;
+	uv = uv * 0.5 + 0.5;
+	return uv;
+}
 
 void main()
 {
-    vec2 screenRes = vec2(1280, 720);
-    vec2 pixel = 1.0f / screenRes;
-
-    vec4 color = texture(texture0, fragTexCoord);
-    // clearly show pixels
-    float v = float(int(fragTexCoord.y * screenRes.y) % 4 != 0);
-    float h = float(int(fragTexCoord.x * screenRes.x) % 4 != 0);
-    color.r *= v * h;
-    color.g *= v * h;
-    color.b *= v * h;
-    // bleed pixels
-    int passes = 4;
-    vec2 topLeft =     vec2(-pixel.x, -pixel.y);
-    vec2 topRight =    vec2( pixel.x, -pixel.y);
-    vec2 bottomLeft =  vec2(-pixel.x,  pixel.y);
-    vec2 bottomRight = vec2( pixel.x,  pixel.y);
-    for (int i = 1; i < passes; i++) {
-        float d = 0.5 * i;
-        color += texture(texture0, fragTexCoord + d * topLeft);
-        color += texture(texture0, fragTexCoord + d * topRight);
-        color += texture(texture0, fragTexCoord + d * bottomLeft);
-        color += texture(texture0, fragTexCoord + d * bottomRight);
-    }
-    // attenuate color after accumulation
-    color /= (passes * 3.1415);
-
-    fragColor = color;
+	vec2 uv = gl_FragCoord.xy / uResolution.xy;
+	uv = curveRemapUV(uv);
+	// RGB shift
+	vec2 rUV = uv + vec2(rgbShift, 0.0);
+	vec2 gUV = uv;
+	vec2 bUV = uv - vec2(rgbShift, 0.0);
+	// final color
+	vec3 color;
+	color.r = texture2D(sScreenTexture, rUV).r;
+	color.g = texture2D(sScreenTexture, gUV).g;
+	color.b = texture2D(sScreenTexture, bUV).b;
+	// scanlines
+	float scanline = sin(uv.y * uResolution.y * 2.0) * 0.5 + 0.5;
+	color *= 1.0 - scanlineIntensity + scanline * scanlineIntensity;
+	// vignette effect
+	float vignette = uv.x * uv.y * (1.0 - uv.x) * (1.0 - uv.y);
+	vignette = pow(vignette, 0.25);
+	color *= vignette;
+	// apply brightness
+	color *= uBrightness;
+	gl_FragColor = vec4(color, 1.0);
 }

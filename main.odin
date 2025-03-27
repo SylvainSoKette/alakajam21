@@ -724,7 +724,17 @@ main :: proc() {
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.BLACK)
 		{
-			rl.BeginShaderMode(app.shaders[app.currentShader])
+			shader := app.shaders[app.currentShader]
+			rl.BeginShaderMode(shader)
+			{
+				resolutionLoc := rl.GetShaderLocation(shader, "uResolution")
+				resolution := rl.Vector2{f32(app.width), f32(app.height)}
+				rl.SetShaderValue(shader, resolutionLoc, &resolution, rl.ShaderUniformDataType.VEC2)
+
+				brightnessLoc := rl.GetShaderLocation(shader, "uBrightness")
+				brightness: f32 = 3.0
+				rl.SetShaderValue(shader, brightnessLoc, &brightness, rl.ShaderUniformDataType.FLOAT)
+			}
 			rl.DrawTextureRec(
 				app.renderTarget.texture,
 				rl.Rectangle {
