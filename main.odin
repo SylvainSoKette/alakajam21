@@ -61,7 +61,8 @@ world_to_tile :: proc(pos: rl.Vector2) -> rl.Vector2 {
 	return pos * mat_copy
 }
 
-camera_normal :: proc(zoom: f32) -> rl.Camera2D {
+
+camera_normal :: proc "contextless" (zoom: f32) -> rl.Camera2D {
 	return rl.Camera2D {
 		zoom = zoom
 	}
@@ -78,6 +79,43 @@ camera_centered :: proc(screen_width, screen_height: f32, zoom: f32) -> rl.Camer
 load_texture :: proc(bytes: []u8) -> rl.Texture {
 	image := rl.LoadImageFromMemory(".png", raw_data(bytes), i32(len(bytes)))
 	return rl.LoadTextureFromImage(image)
+}
+
+// cinematic stuff 😏
+AnimationPlayer :: struct {
+	duration: f32,
+	time:    f32,
+	loop:    bool,
+	playing: bool,
+}
+
+animation_player_update :: proc(player: ^AnimationPlayer, dt: f32) {
+	if !player.playing {
+		return
+	}
+
+	if player.time < player.duration {
+		player.time += dt
+	} else if player.loop {
+		player.time += dt - player.duration
+	}
+}
+
+animation_player_play :: proc(player: ^AnimationPlayer) {
+	player.playing = true
+}
+
+animation_player_stop :: proc(player: ^AnimationPlayer) {
+	player.playing = false
+}
+
+animation_player_restart :: proc(player: ^AnimationPlayer) {
+	player.time = 0.0
+	player.playing = true
+}
+
+animation_player_reset :: proc(player: ^AnimationPlayer) {
+	player.time = 0.0
 }
 
 // drawing
@@ -150,7 +188,7 @@ Application :: struct {
 app := Application {
 	width     = START_WIDTH,
 	height    = START_HEIGHT,
-	name      = "Accretion - Alakajam21 - SoKette",
+	name      = "Accretion - 21st Alakajam - SoKette",
 	flags     = START_FULLSCREEN ? {.FULLSCREEN_MODE} : {},
 	targetFps = 60,
 }
@@ -291,7 +329,6 @@ enter_lost :: proc() {
 	rl.PlaySound(app.soundLost)
 	game.gameCamera = camera_normal(START_ZOOM)
 }
-
 
 enter_game :: proc() {
 	game.screen = .GAME

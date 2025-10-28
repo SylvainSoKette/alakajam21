@@ -5,6 +5,6 @@ odin build . \
 	-o:speed \
 	-export-dependencies:json \
 	-export-dependencies-file:dependencies.json \
-	-obfuscate-source-code-locations \
+	-source-code-locations:obfuscated \
 	-show-timings
 
