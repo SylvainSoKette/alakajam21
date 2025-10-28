@@ -56,11 +56,8 @@ tile_to_world :: proc(x, y: int) -> rl.Vector2 {
 
 WORLD_TO_TILE_MAT := glm.inverse(TILE_TO_WORLD_MAT)
 world_to_tile :: proc(pos: rl.Vector2) -> rl.Vector2 {
-	// NOTE: prevent crash from odin bug
-	mat_copy := WORLD_TO_TILE_MAT
-	return pos * mat_copy
+	return pos * WORLD_TO_TILE_MAT
 }
-
 
 camera_normal :: proc "contextless" (zoom: f32) -> rl.Camera2D {
 	return rl.Camera2D {
